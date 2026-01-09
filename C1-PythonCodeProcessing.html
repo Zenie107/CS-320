@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Python Execution Audit Log</title>
+    <style>
+        body { font-family: 'Courier New', monospace; background: #1a1a1a; color: #d4d4d4; padding: 20px; }
+        .container { max-width: 1100px; margin: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        
+        .panel { background: #252526; border: 1px solid #444; padding: 15px; border-radius: 5px; }
+        h2 { color: #569cd6; font-size: 1.2rem; border-bottom: 1px solid #444; padding-bottom: 10px; margin-top: 0; }
+        
+        .code-line { padding: 5px; border-radius: 3px; margin: 2px 0; transition: 0.3s; }
+        .highlight { background: #3e3e42; color: #dcdcaa; border-left: 4px solid #f1c40f; padding-left: 10px; }
+        
+        .audit-log { height: 200px; overflow-y: auto; background: #000; padding: 10px; font-size: 0.9rem; color: #4ec9b0; border: 1px solid #333; }
+        .log-entry { margin-bottom: 5px; border-bottom: 1px solid #222; }
+        
+        .registers { display: flex; gap: 20px; margin-bottom: 20px; background: #333; padding: 10px; border-radius: 5px; }
+        .reg-box { text-align: center; flex: 1; }
+        .reg-val { font-size: 1.5rem; color: #ce9178; font-weight: bold; }
+
+        .btn-container { grid-column: span 2; text-align: center; padding: 20px; }
+        button { padding: 12px 30px; font-size: 1rem; cursor: pointer; background: #0e639c; color: white; border: none; border-radius: 2px; }
+        button:disabled { background: #444; cursor: not-allowed; }
+        
+        .label { font-size: 0.7rem; color: #888; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="btn-container">
+        <div class="registers">
+            <div class="reg-box"><div class="label">Register EAX</div><div id="reg-eax" class="reg-val">0</div></div>
+            <div class="reg-box"><div class="label">Register EBX</div><div id="reg-ebx" class="reg-val">0</div></div>
+            <div class="reg-box"><div class="label">RAM [Memory]</div><div id="reg-mem" class="reg-val">x=0, y=0</div></div>
+        </div>
+        <button id="nextBtn" onclick="processNext()">Execute Next Micro-Step</button>
+        <button onclick="location.reload()" style="background: #666; margin-left:10px;">Reset</button>
+    </div>
+
+    <div class="panel">
+        <h2>1. Python Source</h2>
+        <div id="py-0" class="code-line">x = 10</div>
+        <div id="py-1" class="code-line">y = 5</div>
+        <div id="py-2" class="code-line">z = x + y</div>
+    </div>
+
+    <div class="panel">
+        <h2>2. CPU Instructions (ASM & Hex)</h2>
+        <div id="asm-0" class="code-line">MOV EAX, 10 <span style="color:#666; font-size:0.8rem;">(0xB8 0A 00)</span></div>
+        <div id="asm-1" class="code-line">MOV [mem_x], EAX <span style="color:#666; font-size:0.8rem;">(0x89 05)</span></div>
+        <div id="asm-2" class="code-line">MOV EBX, 5 <span style="color:#666; font-size:0.8rem;">(0xBB 05 00)</span></div>
+        <div id="asm-3" class="code-line">MOV [mem_y], EBX <span style="color:#666; font-size:0.8rem;">(0x89 1D)</span></div>
+        <div id="asm-4" class="code-line">ADD EAX, EBX <span style="color:#666; font-size:0.8rem;">(0x01 D8)</span></div>
+        <div id="asm-5" class="code-line">MOV [mem_z], EAX <span style="color:#666; font-size:0.8rem;">(0x89 05)</span></div>
+    </div>
+
+    <div class="panel" style="grid-column: span 2;">
+        <h2>3. Hardware Audit Log (The "Truth")</h2>
+        <div id="log" class="audit-log">
+            <div class="log-entry">> System Ready. Awaiting instruction fetch...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentStep = 0;
+    const log = document.getElementById('log');
+    
+    const steps = [
+        { py: 0, asm: 0, eax: 10, ebx: 0, mem: "x=0, y=0", msg: "FETCH: Load literal 10 into accumulator EAX." },
+        { py: 0, asm: 1, eax: 10, ebx: 0, mem: "x=10, y=0", msg: "STORE: Copy EAX value to RAM address allocated for 'x'." },
+        { py: 1, asm: 2, eax: 10, ebx: 5, mem: "x=10, y=0", msg: "FETCH: Load literal 5 into register EBX." },
+        { py: 1, asm: 3, eax: 10, ebx: 5, mem: "x=10, y=5", msg: "STORE: Copy EBX value to RAM address allocated for 'y'." },
+        { py: 2, asm: 4, eax: 15, ebx: 5, mem: "x=10, y=5", msg: "ALU OP: Add EBX to EAX. Result (15) stored in EAX." },
+        { py: 2, asm: 5, eax: 15, ebx: 5, mem: "x=10, y=5, z=15", msg: "STORE: Write final sum from EAX to memory 'z'." }
+    ];
+
+    function processNext() {
+        if (currentStep >= steps.length) {
+            document.getElementById('nextBtn').disabled = true;
+            return;
+        }
+
+        const s = steps[currentStep];
+
+        // Clear previous highlights
+        document.querySelectorAll('.code-line').forEach(el => el.classList.remove('highlight'));
+
+        // Highlight new ones
+        document.getElementById(`py-${s.py}`).classList.add('highlight');
+        document.getElementById(`asm-${currentStep}`).classList.add('highlight');
+
+        // Update Registers
+        document.getElementById('reg-eax').innerText = s.eax;
+        document.getElementById('reg-ebx').innerText = s.ebx;
+        document.getElementById('reg-mem').innerText = s.mem;
+
+        // Update Audit Log
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerHTML = `<span style="color:#569cd6">[STEP ${currentStep}]</span> ${s.msg} <span style="color:#888">HEX: ${document.getElementById(`asm-${currentStep}`).innerText.split('(')[1]}</span>`;
+        log.prepend(entry);
+
+        currentStep++;
+    }
+</script>
+</body>
+</html>
