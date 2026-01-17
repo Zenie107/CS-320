@@ -1,10 +1,9 @@
 name: Update README Links
-
 on:
   push:
     paths:
       - '**/*.html'
-      - '.github/workflows/update-links.yml' # Also runs if you update this script
+      - '.github/workflows/update-links.yml'
 
 jobs:
   build:
@@ -16,40 +15,53 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Generate Links
+      - name: Generate Links and Update README
+        shell: python
         run: |
-          USER=$(echo ${{ github.repository }} | cut -d'/' -f1)
-          REPO=$(echo ${{ github.repository }} | cut -d'/' -f2)
-          
-          # Create the header for our link section
-          echo "### 🔗 Project Links" > links.txt
-          
-          # Find all HTML files, sort them, and format as Markdown links
-          # We exclude index.html and files in the .github folder
-          find . -name "*.html" ! -name "index.html" ! -path "./.github/*" | sort | while read file; do
-            CLEAN_PATH=$(echo $file | sed 's|^\./||')
-            URL="https://$USER.github.io/$REPO/$CLEAN_PATH"
-            echo "* [$CLEAN_PATH]($URL)" >> links.txt
-          done
+          import os
 
-      - name: Update README
-        run: |
-          # 1. Capture everything BEFORE the start marker
-          sed -n '1,//p' README.md > README.new
+          user = "${{ github.repository }}".split('/')[0]
+          repo = "${{ github.repository }}".split('/')[1]
+          start_marker = ""
+          end_marker = ""
           
-          # 2. Append the links generated in the previous step
-          cat links.txt >> README.new
+          # 1. Gather all HTML links
+          html_links = ["\n### 🔗 Project Links\n"]
+          for root, dirs, files in os.walk("."):
+              if ".github" in root or ".git" in root: continue
+              for file in sorted(files):
+                  if file.endswith(".html") and file != "index.html":
+                      path = os.path.join(root, file).replace("./", "")
+                      url = f"https://{user}.github.io/{repo}/{path}"
+                      html_links.append(f"* [{path}]({url})\n")
+
+          # 2. Read README
+          if not os.path.exists("README.md"):
+              with open("README.md", "w") as f: f.write("# " + repo + "\n")
           
-          # 3. Capture everything AFTER the end marker
-          sed -n '//,$p' README.md >> README.new
+          with open("README.md", "r") as f:
+              content = f.read()
+
+          # 3. Ensure markers exist; if not, append them
+          if start_marker not in content:
+              content += f"\n\n{start_marker}\n{end_marker}\n"
+
+          # 4. Inject the links
+          start_idx = content.index(start_marker) + len(start_marker)
+          end_idx = content.index(end_marker)
           
-          # 4. Replace the old README
-          mv README.new README.md
+          new_content = (
+              content[:start_idx] + 
+              "\n" + "".join(html_links) + 
+              content[end_idx:]
+          )
+
+          with open("README.md", "w") as f:
+              f.write(new_content)
 
       - name: Commit and Push
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add README.md
-          # Only commit if there are actual changes to the README
           git diff --quiet && git diff --staged --quiet || (git commit -m "docs: auto-update navigation links" && git push)
