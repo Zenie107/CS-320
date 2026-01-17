@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Ultimate Git & Versioning Guide</title>
+    <style>
+        :root {
+            --bg: #f4f7f6;
+            --primary: #f05032; /* Git Orange */
+            --dark: #333;
+            --white: #ffffff;
+            --code-bg: #2d2d2d;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--dark);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container { max-width: 1000px; margin: auto; }
+        
+        header { 
+            text-align: center; 
+            padding: 2rem 0;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+        }
+        
+        h1 { color: var(--primary); margin: 0; font-size: 2.5rem; }
+        .subtitle { color: #666; margin-top: 10px; }
+
+        #searchBar {
+            width: 80%;
+            max-width: 600px;
+            padding: 15px 25px;
+            margin: 20px 0;
+            border: 2px solid #ddd;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+        #searchBar:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(240, 80, 50, 0.2); }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+        }
+
+        .category {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            height: fit-content;
+        }
+
+        .category h2 { 
+            border-left: 5px solid var(--primary); 
+            padding-left: 15px; 
+            margin-top: 0; 
+            color: #444;
+        }
+
+        .command-card {
+            background: #fffcfb;
+            border: 1px solid #eee;
+            padding: 15px;
+            margin: 12px 0;
+            border-radius: 8px;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .command-card:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            background: #fff5f2;
+        }
+
+        code {
+            background: var(--code-bg);
+            color: #72f1b8;
+            padding: 6px 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .usage { font-weight: 700; color: var(--primary); display: block; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .description { font-size: 0.95rem; color: #555; margin: 8px 0 0 0; }
+
+        .copy-hint {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            font-size: 0.7rem;
+            color: #999;
+            background: #eee;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* SemVer Styles */
+        .semver-box {
+            background: #333;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        .semver-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .semver-table th, .semver-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+        .semver-table th { color: var(--primary); }
+
+        @media (max-width: 600px) {
+            .grid { grid-template-columns: 1fr; }
+            #searchBar { width: 90%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Git Interactive Masterpiece</h1>
+        <p class="subtitle">Complete Workflow, Branching, and Semantic Versioning Guide</p>
+        <input type="text" id="searchBar" placeholder="Search for a command or keyword (e.g. 'merge', 'tag')..." onkeyup="filter()">
+    </header>
+
+    <div class="grid">
+        <div class="category" id="cat1">
+            <h2>1. Setup & Init</h2>
+            <div class="command-card" onclick="copyText(this)">
+                <span class="copy-hint">Copy</span>
+                <span class="usage">Starting Fresh</span>
+                <code>git init</code>
+                <p class="description">Turn a local folder into a Git repository.</p>
+            </div>
+            <div class="command-card" onclick="copyText(this)">
+                <span class="copy-hint">Copy</span>
+                <span class="usage">Downloading Work</span>
+                <code>git clone [url]</code>
+                <p class="description">Copy a remote repository to your computer.</p>
+            </div>
+        </div>
+
+        <div class="category" id="cat2">
+            <h2>2. Daily Workflow</h2>
+            <div class="command-card" onclick="copyText(this)">
+                <span class="copy-hint">Copy</span>
+                <span class="usage">Staging</span>
+                <code>git add .</code>
+                <p class="description">Stage all current changes for the next commit.</p>
+            </div>
+            <div class="command-card" onclick="copyText(this)">
+                <span class="copy-hint">Copy</span>
+                <span class="usage">Saving</span>
+                <code>git commit -m "msg"</code>
+                <p class="description">Save your staged snapshot to history.</p>
+            </div>
+            <div class="command-card" onclick="copyText(this)">
+                <span class="copy-hint">Copy</span>
+                <span class="usage">Review</span>
+                <code>git status</code>
+                <p class="description">See what files are modified or staged.</p>
+            </div>
+        </div>
+
+        <div class="category" id="cat3">
+            <h2>3. Branching & Merging</h2>
+            <div class="command-card" onclick="copyText(this)">
+                <span class="copy-hint">Copy</span>
+                <span class="usage">Isolation</span>
+                <code>git checkout -b [name]</code>
+                <p class="description">Create a new branch and switch to it immediately.</p>
+            </div>
+            <div class="command-card" onclick="copyText(this)">
+                <span class="copy-hint">Copy</span>
+                <span class="usage">Integration</span>
+                <code>git merge [branch]</code>
+                <p class="description">Merge a feature branch into your current branch.</p>
+            </div>
+        </div>
+
+        <div class="category" id="cat4">
+            <h2>4. Remote Sync</h2>
+            <div class="command-card" onclick="copyText(this)">
+                <span class="copy-hint">Copy</span>
+                <span class="usage">Uploading</span>
+                <code>git push origin [branch]</code>
+                <p class="description">Send local commits to the online repository.</p>
+            </div>
+            <div class="command-card" onclick="copyText(this)">
+                <span class="copy-hint">Copy</span>
+                <span class="usage">Updating</span>
+                <code>git pull</code>
+                <p class="description">Fetch and download updates from your team.</p>
+            </div>
+        </div>
+
+        <div class="category" id="cat5">
+            <h2>5. Tagging & Versions</h2>
+            <div class="command-card" onclick="copyText(this)">
+                <span class="copy-hint">Copy</span>
+                <span class="usage">Releasing</span>
+                <code>git tag -a v1.0.0 -m "Release"</code>
+                <p class="description">Create an annotated tag for a specific version.</p>
+            </div>
+            <div class="command-card" onclick="copyText(this)">
+                <span class="copy-hint">Copy</span>
+                <span class="usage">Syncing Tags</span>
+                <code>git push origin --tags</code>
+                <p class="description">Upload all your tags to the server.</p>
+            </div>
+            
+            <div class="semver-box">
+                <strong>Semantic Versioning (SemVer)</strong>
+                <table class="semver-table">
+                    <tr><th>Type</th><th>Example</th><th>Reason</th></tr>
+                    <tr><td>Major</td><td><strong>2</strong>.0.0</td><td>Breaking changes</td></tr>
+                    <tr><td>Minor</td><td>1.<strong>1</strong>.0</td><td>New features</td></tr>
+                    <tr><td>Patch</td><td>1.1.<strong>1</strong></td><td>Bug fixes</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function filter() {
+        let input = document.getElementById('searchBar').value.toLowerCase();
+        let cards = document.getElementsByClassName('command-card');
+        let categories = document.getElementsByClassName('category');
+
+        for (let card of cards) {
+            let content = card.innerText.toLowerCase();
+            card.style.display = content.includes(input) ? "block" : "none";
+        }
+
+        for (let cat of categories) {
+            let visibleCards = cat.querySelectorAll('.command-card[style="display: block;"]');
+            cat.style.display = (visibleCards.length > 0 || input === "") ? "block" : "none";
+        }
+    }
+
+    function copyText(element) {
+        const text = element.querySelector('code').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            const hint = element.querySelector('.copy-hint');
+            hint.innerText = "COPIED!";
+            hint.style.background = "#72f1b8";
+            hint.style.color = "#2d2d2d";
+            setTimeout(() => { 
+                hint.innerText = "Copy"; 
+                hint.style.background = "#eee";
+                hint.style.color = "#999";
+            }, 1000);
+        });
+    }
+</script>
+
+</body>
+</html>
