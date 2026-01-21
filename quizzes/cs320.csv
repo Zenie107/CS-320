@@ -1,0 +1,11 @@
+question,option1,option2,option3,option4,correctIndex
+Which tool helps manage library versions?,Comments,Requirements.txt,More RAM,Fast CPU,1
+What ensure reproducibility in random sequences?,Deleting data,Random Seed,High precision,Offline mode,1
+A memory leak is often caused by:,Slow CPU,Global references,Comments,Variable renaming,1
+Deep copying is used to:,Save space,Isolate objects,Speed up code,Format text,1
+Which breaks reproducibility?,Absolute paths,Variable names,README files,Functions,0
+Python memory management uses:,Magic,Reference counting,Hard drive space,Manual deletion,1
+Docker provides:,Clean code,Environment isolation,Small data,Error correction,1
+To free memory from a variable use:,Rename,del,Restart,Font change,1
+Best practice for reproducibility?,Manual edits,Automated pipelines,USB sticks,Screenshots,1
+A Heap Map visualizes:,Server maps,Memory consumption,Internet speed,Spelling,1
