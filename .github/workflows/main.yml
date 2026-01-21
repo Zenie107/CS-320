@@ -1,0 +1,23 @@
+name: Auto-Update Quiz List
+on:
+  push:
+    paths:
+      - 'quizzes/**'
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Rebuild JSON
+        run: python build_manifest.py
+      - name: Commit changes
+        run: |
+          git config --global user.name "Quiz-Bot"
+          git config --global user.email "bot@github.com"
+          git add quizzes.json
+          git commit -m "Updated manifest with new quizzes" || exit 0
+          git push
