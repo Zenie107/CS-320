@@ -18,46 +18,62 @@ jobs:
       - name: Generate Links and Update README
         shell: python
         run: |
-          import os
+          import os, re
 
-          user = "${{ github.repository }}".split('/')[0]
-          repo = "${{ github.repository }}".split('/')[1]
-          start_marker = ""
-          end_marker = ""
-          
+          # Use the environment variable set by GitHub Actions
+          repo_full = os.environ.get('GITHUB_REPOSITORY', '')
+          if '/' in repo_full:
+              user, repo = repo_full.split('/', 1)
+          else:
+              user, repo = repo_full, ''
+
+          start_marker = "<!-- LINKS_START -->"
+          end_marker = "<!-- LINKS_END -->"
+
           # 1. Gather all HTML links
-          html_links = ["\n### 🔗 Project Links\n"]
+          html_items = []
           for root, dirs, files in os.walk("."):
-              if ".github" in root or ".git" in root: continue
+              # skip .git and .github directories
+              if "/.git" in root.replace("\\", "/") or "/.github" in root.replace("\\", "/"):
+                  continue
               for file in sorted(files):
                   if file.endswith(".html") and file != "index.html":
-                      path = os.path.join(root, file).replace("./", "")
+                      path = os.path.relpath(os.path.join(root, file)).replace("\\", "/").lstrip("./")
                       url = f"https://{user}.github.io/{repo}/{path}"
-                      html_links.append(f"* [{path}]({url})\n")
+                      html_items.append((path, url))
 
-          # 2. Read README
-          if not os.path.exists("README.md"):
-              with open("README.md", "w") as f: f.write("# " + repo + "\n")
-          
-          with open("README.md", "r") as f:
+          # Build the replacement block
+          if html_items:
+              links_block = "\n".join([f"* [{p}]({u})" for p, u in html_items])
+              block = "### 🔗 Project Links\n\n" + links_block + "\n"
+          else:
+              block = "### 🔗 Project Links\n\n_No HTML files found._\n"
+
+          # 2. Read or create README
+          readme_path = "README.md"
+          if not os.path.exists(readme_path):
+              with open(readme_path, "w", encoding="utf-8") as f:
+                  f.write("# " + repo + "\n\n")
+
+          with open(readme_path, "r", encoding="utf-8") as f:
               content = f.read()
 
-          # 3. Ensure markers exist; if not, append them
-          if start_marker not in content:
-              content += f"\n\n{start_marker}\n{end_marker}\n"
+          # 3. If markers missing, append them (markers stay invisible as HTML comments)
+          if start_marker not in content or end_marker not in content:
+              content = content.rstrip() + "\n\n" + start_marker + "\n" + end_marker + "\n"
 
-          # 4. Inject the links
-          start_idx = content.index(start_marker) + len(start_marker)
-          end_idx = content.index(end_marker)
-          
-          new_content = (
-              content[:start_idx] + 
-              "\n" + "".join(html_links) + 
-              content[end_idx:]
-          )
+          # 4. Replace the content between markers atomically
+          pattern = re.compile(re.escape(start_marker) + r".*?" + re.escape(end_marker), re.S)
+          replacement = start_marker + "\n\n" + block + "\n" + end_marker
+          new_content = pattern.sub(replacement, content)
 
-          with open("README.md", "w") as f:
-              f.write(new_content)
+          # 5. Write only if changed
+          if new_content != content:
+              with open(readme_path, "w", encoding="utf-8") as f:
+                  f.write(new_content)
+              print("README.md updated with latest HTML links.")
+          else:
+              print("README.md already up to date. No changes made.")
 
       - name: Commit and Push
         run: |
