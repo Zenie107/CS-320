@@ -1,0 +1,11 @@
+question,option1,option2,option3,option4,correctIndex
+Which 'pillar' of reproducibility is violated if requirements.txt is missing?,Environment isolation,Data provenance,Algorithmic transparency,Bit-level stability,0
+To ensure another student gets the exact same random dataset you must:,Run on the same CPU,Use global variables,Set a fixed integer as a random seed,Use a CSPRNG,2
+Which scenario prevents the Garbage Collector from reclaiming memory?,Object in a finished function,Object in a cleared list,Object in an uncleared reference cycle,Object is a small integer,2
+Why is a pandas DataFrame often larger in RAM than its CSV file?,Double storage in RAM,Metadata overhead per element,Automatic data compression,OS speculative allocation,1
+Which command suggests that the garbage collector run immediately?,mem.free(),del all,sys.exit(),gc.collect(),3
+In the 'Memory Hierarchy' which is fastest but most limited?,L3 Cache,RAM,CPU Registers,SSD,2
+Why are absolute file paths (C:\Users\...) a threat to reproducibility?,They consume more RAM,They are machine-specific and break elsewhere,Python cannot read 'Users' folders,They slow down I/O operations,1
+What is the primary difference between Shallow and Deep Copy?,Deep copy is only for strings,Deep copy duplicates nested objects,Shallow copy deletes the original,Deep copy is automatic,1
+Why is Reference Counting alone insufficient for Python?,It is too expensive,It only works for local variables,It doesn't work on 64-bit,It cannot clean up circular references,3
+Which tool packages the OS environment and libraries together?,Git,Pyenv,Docker,CSV,2
