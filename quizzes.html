@@ -52,53 +52,69 @@
         } catch (e) { document.getElementById('quiz-list').innerText = "Add a CSV to /quizzes to begin!"; }
     }
 
-    async function startQuiz(id) {
-        const res = await fetch(`quizzes/${id}.csv`);
-        const text = await res.text();
-        const rows = text.split('\n').filter(r => r.trim() !== '').slice(1);
-        
-        // Parse and Shuffle
-        let allQuestions = rows.map(row => {
-            const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-            return { q: p[0], a: [p[1], p[2], p[3], p[4]], correct: parseInt(p[5]) };
-        });
+    // ... (keep the rest of the script the same until startQuiz)
 
-        // Fisher-Yates Shuffle Logic
-        questions = allQuestions.sort(() => Math.random() - 0.5).slice(0, 10);
-        
-        document.getElementById('menu-view').classList.add('hidden');
-        document.getElementById('quiz-view').classList.remove('hidden');
-        renderQuestion();
+async function startQuiz(id) {
+    const res = await fetch(`quizzes/${id}.csv?t=${Date.now()}`); // Added cache-busting
+    const text = await res.text();
+    const rows = text.split('\n').filter(r => r.trim() !== '').slice(1);
+    
+    let allQuestions = rows.map(row => {
+        // Updated regex to handle 7 columns
+        const p = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+        return { 
+            q: p[0], 
+            a: [p[1], p[2], p[3], p[4]], 
+            correct: parseInt(p[5]),
+            explanation: p[6] || "No explanation provided." // New field
+        };
+    });
+
+    questions = allQuestions.sort(() => Math.random() - 0.5).slice(0, 10);
+    currentIdx = 0; // Reset index for new quiz
+    
+    document.getElementById('menu-view').classList.add('hidden');
+    document.getElementById('quiz-view').classList.remove('hidden');
+    renderQuestion();
+}
+
+function renderQuestion() {
+    if (currentIdx >= questions.length) {
+        document.getElementById('quiz-view').innerHTML = `<h2>Quiz Over!</h2><button onclick="location.reload()">Back</button>`;
+        return;
     }
+    const data = questions[currentIdx];
+    document.getElementById('progress').innerText = `Question ${currentIdx + 1} of ${questions.length}`;
+    document.getElementById('q-text').innerText = data.q;
+    const container = document.getElementById('options');
+    container.innerHTML = '';
+    document.getElementById('next-btn').classList.add('hidden');
+    
+    // Reset feedback and explanation
+    const feedbackEl = document.getElementById('feedback');
+    feedbackEl.innerHTML = `<div id="exp-box" class="hidden" style="margin-top:10px; padding:10px; background:#f0f7ff; border-left:4px solid #2563eb; font-size:0.9rem;">
+                                <strong>Explanation:</strong> <span id="exp-text"></span>
+                            </div>`;
 
-    function renderQuestion() {
-        if (currentIdx >= questions.length) {
-            document.getElementById('quiz-view').innerHTML = `<h2>Quiz Over!</h2><p>You finished 10 random questions.</p><button onclick="location.reload()">Back</button>`;
-            return;
-        }
-        const data = questions[currentIdx];
-        document.getElementById('progress').innerText = `Question ${currentIdx + 1} of ${questions.length}`;
-        document.getElementById('q-text').innerText = data.q;
-        const container = document.getElementById('options');
-        container.innerHTML = '';
-        document.getElementById('next-btn').classList.add('hidden');
-        document.getElementById('feedback').innerText = '';
-
-        data.a.forEach((text, i) => {
-            const btn = document.createElement('button');
-            btn.className = 'option';
-            btn.innerText = text;
-            btn.onclick = () => {
-                const isCorrect = i === data.correct;
-                btn.classList.add(isCorrect ? 'correct' : 'wrong');
-                document.getElementById('feedback').innerText = isCorrect ? "Correct!" : "Incorrect.";
-                document.querySelectorAll('.option').forEach(b => b.disabled = true);
-                document.getElementById('next-btn').classList.remove('hidden');
-                currentIdx++;
-            };
-            container.appendChild(btn);
-        });
-    }
+    data.a.forEach((text, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'option';
+        btn.innerText = text;
+        btn.onclick = () => {
+            const isCorrect = i === data.correct;
+            btn.classList.add(isCorrect ? 'correct' : 'wrong');
+            
+            // Show Explanation
+            document.getElementById('exp-text').innerText = data.explanation;
+            document.getElementById('exp-box').classList.remove('hidden');
+            
+            document.querySelectorAll('.option').forEach(b => b.disabled = true);
+            document.getElementById('next-btn').classList.remove('hidden');
+            currentIdx++;
+        };
+        container.appendChild(btn);
+    });
+}
     loadManifest();
 </script>
 </body>
